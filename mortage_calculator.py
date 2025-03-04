@@ -103,6 +103,7 @@ loan_amount = 2500000
 annual_interest_rate = 0.08  # 8% annual interest rate assumption
 investment_return_rate = 0.4  # 7% annual investment return assumption
 annual_inflation_rate = 0.28  # 3% annual inflation rate assumption
+monthly_salary = 200000
 
 # Calculate 30-year loan metrics as the baseline for comparison
 years_30 = 30
@@ -124,22 +125,24 @@ for term in range(1, 31):
     # Calculate potential investment value
     # For shorter terms, we invest the difference for the remaining years up to 30
     if term < 30:
-        payment_diff = payment_30 - monthly_payment  # Negative for shorter terms
+        payment_diff = monthly_salary - monthly_payment  # Negative for shorter terms
 
-        if payment_diff < 0:  # For shorter terms, monthly payment is higher
+        if payment_diff < 0:  # For shorter terms where monthly payment is higher than salary
+            investment_value_in_term = 0
+            remaining_years = 30 - term
+            investment_value = calculate_opportunity_cost(
+                monthly_salary, remaining_years, investment_return_rate
+            )
+        else:
             # First investing the higher payment for 'term' years
             investment_value = investment_value_in_term = calculate_opportunity_cost(
-                -payment_diff, term, investment_return_rate
+                payment_diff, term, investment_return_rate
             )
 
             # Then investing the full payment for remaining years after loan is paid off
             remaining_years = 30 - term
             investment_value += calculate_opportunity_cost(
-                monthly_payment, remaining_years, investment_return_rate
-            )
-        else:
-            investment_value = investment_value_in_term = calculate_opportunity_cost(
-                payment_diff, 30, investment_return_rate
+                monthly_salary, remaining_years, investment_return_rate
             )
     else:
         investment_value = 0  # No opportunity cost for 30-year term (our baseline)
@@ -219,7 +222,7 @@ for result in term_results:
 
     # For savings and investment value, adjust based on the term
     inflation_adj_savings = calculate_inflation_adjusted_value(
-        result["savings"], term, annual_inflation_rate
+        result["savings"], 30, annual_inflation_rate
     )
 
     inflation_adj_investment_IT = calculate_inflation_adjusted_value(
